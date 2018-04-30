@@ -1,10 +1,5 @@
 #include "invyswell.h"
 
-void BFHW_tx_begin(void)
-{
-
-}
-
 void BFHW_tx_read(void)
 {
 

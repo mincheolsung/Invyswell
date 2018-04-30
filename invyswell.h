@@ -2,7 +2,6 @@
 #include "BitFilter.h"
 
 /* BFHW functions */
-void BFHW_tx_begin(void);
 void BFHW_tx_read(void);
 void BFHW_tx_write(void);
 void BFHW_tx_end(void);
