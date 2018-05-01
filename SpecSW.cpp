@@ -123,7 +123,11 @@ bool CM_can_commit()
 	}
 
 	return iBalance(&(tx[tx_id]), conflicts, conflicts_size);
-	
+}
+
+void commit(void)
+{
+	tx[tx_id].write_set->writeback();
 }
 
 void SpecSW_tx_end(void)
@@ -141,6 +145,20 @@ void SpecSW_tx_end(void)
 
 	__sync_fetch_and_sub(&sw_cnt, 1);
 	commit();
+}
+
+void invalidate()
+{
+	//compare write set with read set of in-flight transactions and invalidate if match
+	for(int i=0; i<no_of_threads; i++)
+	{ 
+		if(tx[i].inflight)
+			if(tx[tx_id].write_filter.intersect(tx[i].read_filter))
+			{
+				tx[i].status = INVALID;
+			}
+	}
+
 }
 
 void SpecSW_tx_post_commit()
