@@ -1,3 +1,6 @@
+#ifndef __SGLSW_HPP__
+#define __SGLSW_HPP__
+
 #include "invyswell.h"
 
 void SglSW_tx_begin(void)
@@ -6,8 +9,10 @@ void SglSW_tx_begin(void)
 	++commit_sequence;
 }
 
-void IrrevocSW_tx_end(void)
+void SglSW_tx_end(void)
 {
 	++commit_sequence;
 	pthread_mutex_unlock(&commit_lock);
 }
+
+#endif
