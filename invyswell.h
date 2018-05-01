@@ -1,6 +1,8 @@
+#include <threads.h>
+
 #include "rtm.h"
 #include "BitFilter.h"
-#include <threads.h>
+#include "WriteSet.hpp"
 
 #define FILTER_SIZE 4096
 #define WC = 3;
@@ -39,7 +41,10 @@ struct Tx_Context
 struct Tx_context tx[300];
 
 /* BFHW functions */
-void BFHW_tx_read(void);
-void BFHW_tx_write(void);
+void BFHW_tx_read(uint64_t *addr);
+void BFHW_tx_write(uint64_t *addr);
 void BFHW_tx_end(void);
 void BFHW_tx_post_commit(void);
+
+/* LightHW functions */
+void LightHW_tx_end(void);

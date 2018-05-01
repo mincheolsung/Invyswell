@@ -9,6 +9,7 @@
 
 #include <errno.h>
 #include "rtm.h"
+#include "invyswell.h"
 
 #define CFENCE  __asm__ volatile ("":::"memory")
 #define MFENCE  __asm__ volatile ("mfence":::"memory")
