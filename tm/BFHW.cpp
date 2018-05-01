@@ -28,7 +28,7 @@ void BFHW_tx_end(void)
 			*/
 			if (tx[id].inflight)
 				if (tx[tx_id].write_filter.intersect(&tx[id].read_filter))
-					_xabort();
+					_xabort(1);
 		}
 		++hw_post_commit;
 		_xend();

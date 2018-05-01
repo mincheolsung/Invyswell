@@ -1,4 +1,18 @@
-#include <threads.h>
+#include <stdio.h>
+#include <pthread.h>
+#include <time.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <setjmp.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "rtm.h"
 #include "BitFilter.h"
@@ -9,6 +23,9 @@
 #define RC = 1;
 #define FCC = 3;
 #define SC = 3;
+
+using stm::WriteSetEntry;
+using stm::WriteSet;
 
 enum Tx_Stauts
 {
@@ -31,14 +48,14 @@ struct Tx_Context
 	BitFilter<FILTER_SIZE> write_filter;
 	BitFilter<FILTER_SIZE> read_filter;
 	WriteSet *write_set;
-	ReadSet *read_set;
+	WriteSet *read_set;
 	unsigned long local_cs;
 	int status;
 	bool isInFlight;
 	unsigned long priority;
-}
+};
 
-struct Tx_context tx[300];
+struct Tx_Context tx[300];
 
 /* BFHW functions */
 void BFHW_tx_read(uint64_t *addr);

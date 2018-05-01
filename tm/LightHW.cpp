@@ -8,5 +8,5 @@ void LightHW_tx_end(void)
 		_xend();
 	}
 	else 
-		_xabort();
+		_xabort(1);
 }

@@ -25,19 +25,19 @@ $(OBJ_DIR)/WriteSet.o: $(OBJ_DIR) $(SRC_DIR)/tm/WriteSet.c $(SRC_DIR)/tm/WriteSe
 	$(CPP) $(CCFLAGS) $(CPPFLAGS) $(SRC_DIR)/tm/WriteSet.c -c -o $@
 
 $(OBJ_DIR)/LightHW.o: $(OBJ_DIR) $(SRC_DIR)/tm/LightHW.cpp
-	$(CPP) $(CCFLAGS) $(CPPFLAGS) $(SRC_DIR)/tm/LightHW.c -c -o $@
+	$(CPP) $(CCFLAGS) $(CPPFLAGS) $(SRC_DIR)/tm/LightHW.cpp -c -o $@
 
 $(OBJ_DIR)/BFHW.o: $(OBJ_DIR) $(SRC_DIR)/tm/BFHW.cpp
-	$(CPP) $(CCFLAGS) $(CPPFLAGS) $(SRC_DIR)/tm/BFHW.c -c -o $@
+	$(CPP) $(CCFLAGS) $(CPPFLAGS) $(SRC_DIR)/tm/BFHW.cpp -c -o $@
 
 $(OBJ_DIR)/SpecSW.o: $(OBJ_DIR) $(SRC_DIR)/tm/SpecSW.cpp
-	$(CPP) $(CCFLAGS) $(CPPFLAGS) $(SRC_DIR)/tm/SpecSW.c -c -o $@
+	$(CPP) $(CCFLAGS) $(CPPFLAGS) $(SRC_DIR)/tm/SpecSW.cpp -c -o $@
 
 $(OBJ_DIR)/SglSW.o: $(OBJ_DIR) $(SRC_DIR)/tm/SglSW.cpp
-	$(CPP) $(CCFLAGS) $(CPPFLAGS) $(SRC_DIR)/tm/SglSW.c -c -o $@
+	$(CPP) $(CCFLAGS) $(CPPFLAGS) $(SRC_DIR)/tm/SglSW.cpp -c -o $@
 
 $(OBJ_DIR)/IrrevocSW.o: $(OBJ_DIR) $(SRC_DIR)/tm/IrrevocSW.cpp
-	$(CPP) $(CCFLAGS) $(CPPFLAGS) $(SRC_DIR)/tm/IrrevocSW.c -c -o $@
+	$(CPP) $(CCFLAGS) $(CPPFLAGS) $(SRC_DIR)/tm/IrrevocSW.cpp -c -o $@
 
 
 ################
