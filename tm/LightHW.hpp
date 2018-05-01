@@ -1,6 +1,8 @@
+#ifndef __LIGHTHW__
+#define __LIGHTHW__
 #include "invyswell.h"
 
-void LightHW_tx_end(void)
+FORCE_INLINE void LightHW_tx_end(void)
 {
 	if (pthread_mutex_trylock(&commit_lock) == 0 && !sw_cnt)
 	{
@@ -10,3 +12,5 @@ void LightHW_tx_end(void)
 	else 
 		_xabort(1);
 }
+
+#endif

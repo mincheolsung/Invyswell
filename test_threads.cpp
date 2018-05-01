@@ -9,6 +9,12 @@
 
 #include <errno.h>
 #include "tm/invyswell.h"
+#include "tm/SpecSW.hpp"
+#include "tm/WriteSet.hpp"
+#include "tm/IrrevocSW.hpp"
+#include "tm/SglSW.hpp"
+#include "tm/LightHW.hpp"
+#include "tm/BFHW.hpp"
 
 #define CFENCE  __asm__ volatile ("":::"memory")
 #define MFENCE  __asm__ volatile ("mfence":::"memory")
@@ -17,7 +23,7 @@
 volatile int counter = 0;
 volatile int lock = 0;
 
-int total_threads;
+//int total_threads;
 
 
 inline unsigned long long get_real_time() {
@@ -70,6 +76,10 @@ void* th_run(void * args)
 		if(status == _XBEGIN_STARTED){
 			if (lock == 1) _xabort(1);
 			//Code for HTM path
+			
+			BFHW_tx_read(NULL);
+			BFHW_tx_write(NULL);
+			
 			counter++;
 			localCounter++;
 			_xend();
@@ -80,6 +90,9 @@ void* th_run(void * args)
 		} else {
 			while(!__sync_bool_compare_and_swap(&lock, 0, 1)){}
 				//Code for SW path with instrumented read/write
+				SpecSW_tx_read(NULL);
+				SpecSW_tx_write(NULL);
+
 
 				counter++;
 				localCounter++;

@@ -1,16 +1,20 @@
+#ifndef __BFHW__
+#define __BFHW__
+
+
 #include "invyswell.h"
 
-void BFHW_tx_read(uint64_t *addr)
+FORCE_INLINE void BFHW_tx_read(uint64_t *addr)
 {
 	tx[tx_id].read_filter.add(addr);
 }
 
-void BFHW_tx_write(uint64_t *addr)
+FORCE_INLINE void BFHW_tx_write(uint64_t *addr)
 {
 	tx[tx_id].write_filter.add(addr);
 }
 
-void BFHW_tx_end(void)
+FORCE_INLINE void BFHW_tx_end(void)
 {
 	if (pthread_mutex_trylock(&commit_lock) == 0)
 	{
@@ -20,7 +24,7 @@ void BFHW_tx_end(void)
 	}
 	else
 	{
-		for (int id = 0; id < no_of_threads; id++ )
+		for (int id = 0; id < total_threads; id++ )
 		{
 			/*
 			if (id == tx_id)
@@ -35,10 +39,11 @@ void BFHW_tx_end(void)
 	}
 }
 
-void BFHW_tx_post_commit(void)
+FORCE_INLINE void BFHW_tx_post_commit(void)
 {
-	if(tx[tx_id].writeset->size() != 0) // !read-only
+	if(tx[tx_id].write_set->size() != 0) // !read-only
 		invalidate();
 
 	__sync_fetch_and_sub(&hw_post_commit, 1);
 }
+#endif
