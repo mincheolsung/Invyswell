@@ -80,6 +80,7 @@ void* th_run(void * args)
 		} else {
 			while(!__sync_bool_compare_and_swap(&lock, 0, 1)){}
 				//Code for SW path with instrumented read/write
+
 				counter++;
 				localCounter++;
 			lock = 0;
