@@ -1,3 +1,8 @@
+#ifndef __SPECSW_HPP__
+#define __SPECSW_HPP__
+
+#include <setjmp.h>
+
 #include "invyswell.h"
 
 #define  SpecSW_TX_BEGIN(void)					\
@@ -13,7 +18,7 @@
 	while(local_cs & 1);					\
 }						
 
-unsigned long SpecSW_tx_read(uint64_t* addr)
+FORCE_INLINE uint64_t SpecSW_tx_read(uint64_t* addr)
 {
 	WriteSetEntry log((void**)addr);
     	bool found = tx[tx_id].writeset->find(log);
@@ -26,7 +31,7 @@ unsigned long SpecSW_tx_read(uint64_t* addr)
 	return val;
 } 
 
-void SpecSW_tx_write(uint64_t* addr)
+FORCE_INLINE void SpecSW_tx_write(uint64_t* addr)
 {
 	if(tx[tx_id].status == INVALID)
 		restart();
@@ -39,7 +44,7 @@ void SpecSW_tx_write(uint64_t* addr)
 
 }
 
-void validate()
+FORCE_INLINE void validate()
 {
 	if(tx[tx_id].local_cs != commit_sequence)
 		longjmp(tx[tx_id].scope, 1); // restart
@@ -55,7 +60,7 @@ void validate()
 		longjmp(tx[tx_id].scope, 1); // restart
 }
 
-bool iBalance(struct Tx_context *commitTx, struct Tx_context **conflicts, int conflicts_size)
+FORCE_INLINE bool iBalance(struct Tx_context *commitTx, struct Tx_context **conflicts, int conflicts_size)
 {
 	Tx_context *c = commitTx, *tx = NULL;
 	int setSize = (c->write-set->size() * (c->priority + WC)) + (c->read_set->size() * (c->priority + RC));
@@ -72,11 +77,11 @@ bool iBalance(struct Tx_context *commitTx, struct Tx_context **conflicts, int co
 
 /*		if(tx->commits < c->commits)
 			fewestCommits = false;*/
-		if(tx->read_set->size() > tx->read_set->size(c)
+		if(tx->read_set->size() > c->read_set->size())
 			mostReads = false;
 
-		if(tx->write_set->size() > tx->write_set->size(c)
-                        mostWritess = false;
+		if(tx->write_set->size() > c->write_set->size())
+                        mostWrites = false;
 
 		if(tx->priority > highestPrio)
 			highestPrio = tx->priority;
@@ -106,13 +111,13 @@ bool iBalance(struct Tx_context *commitTx, struct Tx_context **conflicts, int co
 	return canAbort;
 }
 
-bool CM_can_commit()
+FORCE_INLINE bool CM_can_commit()
 {
 	struct Tx_context conflicts[300];
 	int conflicts_size;
 
 	//compare write set with read set of in-flight transactions and make set named conflicts
-	for(int i=0, conflicts_size=0; i<no_of_threads; i++)
+	for(int i=0, conflicts_size=0; i<total_threads; i++)
 	{ 
 		if(tx[i].inflight)
 			if(tx[tx_id].write_filter.intersect(tx[i].read_filter))
@@ -125,12 +130,12 @@ bool CM_can_commit()
 	return iBalance(&(tx[tx_id]), conflicts, conflicts_size);
 }
 
-void commit(void)
+FORCE_INLINE void commit(void)
 {
 	tx[tx_id].write_set->writeback();
 }
 
-void SpecSW_tx_end(void)
+FORCE_INLINE void SpecSW_tx_end(void)
 {
 	if(tx[tx_id].writeset->size() == 0) //read-only
 	{
@@ -147,10 +152,10 @@ void SpecSW_tx_end(void)
 	commit();
 }
 
-void invalidate()
+FORCE_INLINE void invalidate()
 {
 	//compare write set with read set of in-flight transactions and invalidate if match
-	for(int i=0; i<no_of_threads; i++)
+	for(int i=0; i<total_threads; i++)
 	{ 
 		if(tx[i].inflight)
 			if(tx[tx_id].write_filter.intersect(tx[i].read_filter))
@@ -161,8 +166,10 @@ void invalidate()
 
 }
 
-void SpecSW_tx_post_commit()
+FORCE_INLINE void SpecSW_tx_post_commit()
 {
 	invalidate();
 	pthread_mutex_unlock(&commit_lock);
 }
+
+#endif

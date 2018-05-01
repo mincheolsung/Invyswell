@@ -9,6 +9,9 @@
 
 #include <errno.h>
 #include "rtm.h"
+#include "SpecSW.hpp"
+#include "IrrevocSW.hpp"
+#include "SglSW.hpp"
 
 #define CFENCE  __asm__ volatile ("":::"memory")
 #define MFENCE  __asm__ volatile ("mfence":::"memory")
@@ -17,7 +20,7 @@
 volatile int counter = 0;
 volatile int lock = 0;
 
-int total_threads;
+//int total_threads;
 
 
 inline unsigned long long get_real_time() {
