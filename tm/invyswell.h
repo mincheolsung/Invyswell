@@ -59,19 +59,121 @@ struct Tx_Context
 	int status;
 	bool inflight;
 	int priority;
+	int type;
 };
 
 struct Tx_Context tx[300];
 
-#if 0
-/* BFHW functions */
-void BFHW_tx_read(uint64_t *addr);
-void BFHW_tx_write(uint64_t *addr);
-void BFHW_tx_end(void);
-void BFHW_tx_post_commit(void);
+FORCE_INLINE void invyswell_tx_begin(void)
+{
+	switch(tx[tx_id].type) {
+	/* LightHW */
+	case 1:
+		_xbegin();
+		break;
 
-/* LightHW functions */
-void LightHW_tx_end(void);
-#endif
+	/* BFHW */
+	case 2:
+		_xbegin();
+		break;
 
-#endif
+	/* SpecSW */
+	case 3:
+		SpecSW_TX_BEGIN
+		break;
+
+	/* SglSW */
+	case 4:
+		SglSW_tx_begin();
+		break;
+
+	/* IrrevocSW */
+	case 5:
+		IrrevocSW_tx_begin();
+		break;
+
+	default:
+		break;
+	}
+}
+
+FORCE_INLINE uint64_t invyswell_tx_read(uint64_t *addr)
+{
+	uint64_t value;
+
+	switch(tx[tx_id].type) {
+
+	/* LightHW */
+	case 1:
+		value = *addr;	
+		break;
+
+	/* BFHW */
+	case 2:
+		BFHW_tx_read(addr);
+		value = *addr;	
+		break;
+
+	/* SpecSW */
+	case 3:
+		value = SpecSW_tx_read(addr);
+		break;
+
+	/* SglSW */
+	case 4:
+		value = *addr;
+		break;
+
+	/* IrrevocSW */
+	case 5:
+		IrrevocSW_tx_read(addr);
+		value = *addr;
+		break;
+
+	default:
+		break;
+	}
+
+	return value;
+}
+
+FORCE_INLINE void invyswell_tx_write(uint64_t *addr, uint64_t value)
+{
+	switch(tx[tx_id].type) {
+
+	/* LightHW */
+	case 1:
+		*addr = value;	
+		break;
+
+	/* BFHW */
+	case 2:
+		BFHW_tx_write(addr);
+		*addr = value;	
+		break;
+
+	/* SpecSW */
+	case 3:
+		value = SpecSW_tx_write(addr);
+		break;
+
+	/* SglSW */
+	case 4:
+		*addr = value;
+		break;
+
+	/* IrrevocSW */
+	case 5:
+		IrrevocSW_tx_write(addr);
+		*addr = value;
+		break;
+
+	default:
+		break;
+	}
+}
+
+FORCE_INLINE void invyswell_tx_end(void)
+{
+
+}
