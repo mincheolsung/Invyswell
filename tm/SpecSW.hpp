@@ -5,7 +5,7 @@
 
 #include "invyswell.h"
 
-#define  SpecSW_TX_BEGIN(void)					\
+#define  SpecSW_TX_BEGIN		\
 {								\
 	unsigned long sw_cnt, tx[tx_id].priority = 0;		\
 	uint32_t abort_flags = _setjmp (tx.scope);		\
