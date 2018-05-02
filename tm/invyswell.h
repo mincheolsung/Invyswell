@@ -60,35 +60,46 @@ struct Tx_Context
 	bool inflight;
 	int priority;
 	int type;
+	int trial;
 };
 
 struct Tx_Context tx[300];
 
 FORCE_INLINE void invyswell_tx_begin(void)
 {
+	if (tx[tx_id].trial == 5)
+	{
+		tx[tx_id].type++;
+		tx[tx_id].trial = 0;
+	}
+	else
+	{
+		tx[tx_id].trial++;
+	}
+
 	switch(tx[tx_id].type) {
 	/* LightHW */
-	case 1:
+	case 0:
 		_xbegin();
 		break;
 
 	/* BFHW */
-	case 2:
+	case 1:
 		_xbegin();
 		break;
 
 	/* SpecSW */
-	case 3:
+	case 2:
 		SpecSW_TX_BEGIN
 		break;
 
 	/* SglSW */
-	case 4:
+	case 3:
 		SglSW_tx_begin();
 		break;
 
 	/* IrrevocSW */
-	case 5:
+	case 4:
 		IrrevocSW_tx_begin();
 		break;
 
@@ -104,28 +115,28 @@ FORCE_INLINE uint64_t invyswell_tx_read(uint64_t *addr)
 	switch(tx[tx_id].type) {
 
 	/* LightHW */
-	case 1:
+	case 0:
 		value = *addr;	
 		break;
 
 	/* BFHW */
-	case 2:
+	case 1:
 		BFHW_tx_read(addr);
 		value = *addr;	
 		break;
 
 	/* SpecSW */
-	case 3:
+	case 2:
 		value = SpecSW_tx_read(addr);
 		break;
 
 	/* SglSW */
-	case 4:
+	case 3:
 		value = *addr;
 		break;
 
 	/* IrrevocSW */
-	case 5:
+	case 4:
 		IrrevocSW_tx_read(addr);
 		value = *addr;
 		break;
@@ -142,28 +153,28 @@ FORCE_INLINE void invyswell_tx_write(uint64_t *addr, uint64_t value)
 	switch(tx[tx_id].type) {
 
 	/* LightHW */
-	case 1:
+	case 0:
 		*addr = value;	
 		break;
 
 	/* BFHW */
-	case 2:
+	case 1:
 		BFHW_tx_write(addr);
 		*addr = value;	
 		break;
 
 	/* SpecSW */
-	case 3:
-		value = SpecSW_tx_write(addr);
+	case 2:
+		SpecSW_tx_write(addr, value);
 		break;
 
 	/* SglSW */
-	case 4:
+	case 3:
 		*addr = value;
 		break;
 
 	/* IrrevocSW */
-	case 5:
+	case 4:
 		IrrevocSW_tx_write(addr);
 		*addr = value;
 		break;
@@ -175,5 +186,37 @@ FORCE_INLINE void invyswell_tx_write(uint64_t *addr, uint64_t value)
 
 FORCE_INLINE void invyswell_tx_end(void)
 {
+	switch(tx[tx_id].type) {
 
+	/* LightHW */
+	case 0:
+		LightHW_tx_end();	
+		break;
+
+	/* BFHW */
+	case 1:
+		BFHW_tx_end();
+		BFHW_tx_post_commit();
+		break;
+
+	/* SpecSW */
+	case 2:
+		SpecSW_tx_end();
+		SpecSW_tx_post_commit();
+		break;
+
+	/* SglSW */
+	case 3:
+		SglSW_tx_end();
+		break;
+
+	/* IrrevocSW */
+	case 4:
+		IrrevocSW_tx_end();
+		IrrevocSW_tx_post_commit();
+		break;
+
+	default:
+		break;
+	}
 }

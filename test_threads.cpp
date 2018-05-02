@@ -63,6 +63,9 @@ void* th_run(void * args)
 {
 
 	long id = (long)args;
+	/* tx_id is thread-local variable */
+	tx_id = id;
+
 	int localCounter = 0;
 
 	barrier(0);
@@ -70,6 +73,9 @@ void* th_run(void * args)
 	int inHTM = 0;
 	int inGL = 0;
 	for (int i=0; i<1000000; i++) {
+		tx[tx_id].type = 0;
+		tx[tx_id].trial = 0;
+
 		int attempts = 5;
 		again: while (lock == 1) {}
 		unsigned int status = _xbegin();
