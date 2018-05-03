@@ -1,23 +1,19 @@
 #ifndef __SPECSW_HPP__
 #define __SPECSW_HPP__
 
-#include <setjmp.h>
-
-#include "invyswell.h"
+#include "test_threads.hpp"
 
 #define  SpecSW_TX_BEGIN								\
 {														\
-	if (tx[tx_id].trial == 5)							\
-		longjmp(tx[tx_id].global_scope, 1); 			\
-	unsigned long sw_cnt, tx[tx_id].priority = 0;		\
-	uint32_t abort_flags = _setjmp (tx.scope);			\
+	unsigned long sw_cnt;								\
+	tx[tx_id].priority = 0;								\
 	tx[tx_id].priority++;								\
 	__sync_fetch_and_add(&sw_cnt, 1);					\
 	do													\
 	{													\
 		tx[tx_id].local_cs = commit_sequence;			\
 	}													\
-	while(local_cs & 1);								\
+	while(tx[tx_id].local_cs & 1);						\
 }						
 
 FORCE_INLINE void validate(void)
