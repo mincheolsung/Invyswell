@@ -8,8 +8,7 @@
 
 #define INVYSWELL_TX_BEGIN							  	\
 	uint32_t abort_flags = _setjmp(tx[tx_id].scope);  	\
-	unsigned int status;							 	\
-														\
+	unsigned int status;								\
 	switch(tx[tx_id].type) {							\
 	/* LightHW */										\
 	case 0:												\

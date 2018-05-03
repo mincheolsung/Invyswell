@@ -55,6 +55,8 @@ void* th_run(void * args)
 	long id = (long)args;
 	/* tx_id is thread-local variable */
 	tx_id = id;
+
+	/* initialize write_set, read_set, and commit_lock */
 	thread_init((int)id);
 
 	uint64_t localCounter = 0;
@@ -90,8 +92,10 @@ again:
 		else
 		{
 			if (tx[tx_id].type == 1)
+			{
+				tx[tx_id].attempts = 5;
 				goto again;
-	
+			}
 			//printf("2: HTM:%d, STM:%d\n", inHTM, inSTM);
 			tx[tx_id].type++;
 			tx[tx_id].attempts = 5;
