@@ -51,6 +51,7 @@ struct Tx_Context
 {
 	int id;
 	jmp_buf scope;
+	jmp_buf global_scope;
 	BitFilter<FILTER_SIZE> write_filter;
 	BitFilter<FILTER_SIZE> read_filter;
 	WriteSet *write_set;
@@ -65,8 +66,11 @@ struct Tx_Context
 
 struct Tx_Context tx[300];
 
-FORCE_INLINE void invyswell_tx_begin(void)
+#if 1
+FORCE_INLINE unsigned int invyswell_tx_begin(void)
 {
+	uint32_t abort_flags = _setjmp(tx.global_scope);
+
 	if (tx[tx_id].trial == 5)
 	{
 		tx[tx_id].type++;
@@ -80,31 +84,29 @@ FORCE_INLINE void invyswell_tx_begin(void)
 	switch(tx[tx_id].type) {
 	/* LightHW */
 	case 0:
-		_xbegin();
-		break;
+		return _xbegin();
 
 	/* BFHW */
 	case 1:
-		_xbegin();
-		break;
+		return _xbegin();
 
 	/* SpecSW */
 	case 2:
 		SpecSW_TX_BEGIN
-		break;
+		return 0;
 
 	/* SglSW */
 	case 3:
 		SglSW_tx_begin();
-		break;
+		return 0;
 
 	/* IrrevocSW */
 	case 4:
 		IrrevocSW_tx_begin();
-		break;
+		return 0;
 
 	default:
-		break;
+		return 1;
 	}
 }
 
@@ -220,3 +222,6 @@ FORCE_INLINE void invyswell_tx_end(void)
 		break;
 	}
 }
+#endif
+
+#endif

@@ -7,6 +7,8 @@
 
 #define  SpecSW_TX_BEGIN								\
 {														\
+	if (tx[tx_id].trial == 5)							\
+		longjmp(tx[tx_id].global_scope, 1); 			\
 	unsigned long sw_cnt, tx[tx_id].priority = 0;		\
 	uint32_t abort_flags = _setjmp (tx.scope);			\
 	tx[tx_id].priority++;								\
@@ -55,7 +57,7 @@ FORCE_INLINE void SpecSW_tx_write(uint64_t* addr, uint64_t val)
 	tx[tx_id].write_filter.add(addr);
 	//add addr, val to local hash table
 	// val = *addr
-	tx->write_set->insert(WriteSetEntry((void**)addr, val);
+	tx->write_set->insert(WriteSetEntry((void**)addr, val));
 }
 
 FORCE_INLINE bool iBalance(struct Tx_Context *commitTx, struct Tx_Context *conflicts, int conflicts_size)

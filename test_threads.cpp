@@ -77,14 +77,18 @@ void* th_run(void * args)
 		tx[tx_id].trial = 0;
 
 		int attempts = 5;
-		again: while (lock == 1) {}
+		again: while (lock == 1){}
 		unsigned int status = _xbegin();
 		if(status == _XBEGIN_STARTED){
-			if (lock == 1) _xabort(1);
+			if (lock == 1) 
+			{
+				_xabort(1);
+			}
+			
 			//Code for HTM path
 			
-			BFHW_tx_read(NULL);
-			BFHW_tx_write(NULL);
+			//BFHW_tx_read(NULL);
+			//BFHW_tx_write(NULL);
 			
 			counter++;
 			localCounter++;
@@ -96,10 +100,8 @@ void* th_run(void * args)
 		} else {
 			while(!__sync_bool_compare_and_swap(&lock, 0, 1)){}
 				//Code for SW path with instrumented read/write
-				SpecSW_tx_read(NULL);
-				SpecSW_tx_write(NULL);
-
-
+				//SpecSW_tx_read(NULL);
+				//SpecSW_tx_write(NULL);
 				counter++;
 				localCounter++;
 			lock = 0;
