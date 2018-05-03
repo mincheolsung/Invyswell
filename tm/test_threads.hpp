@@ -23,6 +23,7 @@
 
 #define FORCE_INLINE __attribute__((always_inline)) inline
 
+#define ACCESS_SIZE 102400
 #define FILTER_SIZE 4096
 #define WC  3
 #define RC  1
@@ -65,5 +66,13 @@ struct Tx_Context
 };
 
 struct Tx_Context tx[300];
+
+FORCE_INLINE void thread_init(int id)
+{
+	tx[id].write_set = new WriteSet(ACCESS_SIZE);
+	tx[id].read_set = new WriteSet(ACCESS_SIZE);
+	if (pthread_mutex_init(&commit_lock, NULL) != 0)
+		printf("commit_lock init fails\n");
+}
 
 #endif

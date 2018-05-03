@@ -11,20 +11,10 @@
 #include "tm/test_threads.hpp"
 #include "tm/Invyswell.hpp"
 
-//#include "tm/SpecSW.hpp"
-//#include "tm/WriteSet.hpp"
-//#include "tm/IrrevocSW.hpp"
-//#include "tm/SglSW.hpp"
-//#include "tm/LightHW.hpp"
-//#include "tm/BFHW.hpp"
-
 #define CFENCE  __asm__ volatile ("":::"memory")
 #define MFENCE  __asm__ volatile ("mfence":::"memory")
 
 uint64_t counter = 0;
-
-//int total_threads;
-
 
 inline unsigned long long get_real_time() {
         struct timespec time;
@@ -65,13 +55,14 @@ void* th_run(void * args)
 	long id = (long)args;
 	/* tx_id is thread-local variable */
 	tx_id = id;
+	thread_init((int)id);
 
 	uint64_t localCounter = 0;
 
 	barrier(0);
 		
-	//int inHTM = 0;
-	//int inSTM = 0;
+	int inHTM = 0;
+	int inSTM = 0;
 
 	for (int i=0; i<1000000; i++) 
 	{
@@ -81,24 +72,34 @@ again:
 		INVYSWELL_TX_BEGIN
 		if (status == _XBEGIN_STARTED || status == 0)
 		{
-			//Code for HTM path	
-			invyswell_tx_write(&counter, invyswell_tx_read(&counter) + 1);
+			uint64_t value = invyswell_tx_read(&counter);
+			invyswell_tx_write(&counter, value + 1);
 			localCounter++;	
 			invyswell_tx_end();
+			if (status == _XBEGIN_STARTED)
+				inHTM++;
+			else if (status == 0)
+				inSTM++;
 		}
 		else if (tx[tx_id].attempts > 0)
 		{
+			//printf("1: HTM:%d, STM:%d\n", inHTM, inSTM);
 			tx[tx_id].attempts--;
 			goto again;
 		}
 		else
 		{
+			if (tx[tx_id].type == 1)
+				goto again;
+	
+			//printf("2: HTM:%d, STM:%d\n", inHTM, inSTM);
 			tx[tx_id].type++;
 			tx[tx_id].attempts = 5;
 			goto again;
 		}
 	}
- 	printf("Thread %ld local counter = %lu and global counter = %lu\n", id, localCounter, counter); 
+	printf("commit_sequence: %lu\n", commit_sequence);
+ 	printf("Thread %ld local counter = %lu and global counter = %lu, inHTM = %d, inSTM = %d\n", id, localCounter, counter, inHTM, inSTM); 
 	return 0;
 }
 
