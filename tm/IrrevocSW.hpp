@@ -1,7 +1,7 @@
 #ifndef __IRREVOCSW_HPP__
 #define __IRREVOCSW_HPP__
 
-#include "invyswell.h"
+#include "test_threads.hpp"
 #include "SpecSW.hpp"
 
 FORCE_INLINE void IrrevocSW_tx_begin(void)

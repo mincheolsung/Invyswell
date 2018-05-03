@@ -1,21 +1,19 @@
 #ifndef __SPECSW_HPP__
 #define __SPECSW_HPP__
 
-#include <setjmp.h>
+#include "test_threads.hpp"
 
-#include "invyswell.h"
-
-#define  SpecSW_TX_BEGIN		\
-{								\
-	unsigned long sw_cnt, tx[tx_id].priority = 0;		\
-	uint32_t abort_flags = _setjmp (tx.scope);		\
-	tx[tx_id].priority++;					\
-	__sync_fetch_and_add(&sw_cnt, 1);			\
-	do							\
-	{							\
-		tx[tx_id].local_cs = commit_sequence;		\
-	}							\
-	while(local_cs & 1);					\
+#define  SpecSW_TX_BEGIN								\
+{														\
+	unsigned long sw_cnt;								\
+	tx[tx_id].priority = 0;								\
+	tx[tx_id].priority++;								\
+	__sync_fetch_and_add(&sw_cnt, 1);					\
+	do													\
+	{													\
+		tx[tx_id].local_cs = commit_sequence;			\
+	}													\
+	while(tx[tx_id].local_cs & 1);						\
 }						
 
 FORCE_INLINE void validate(void)
@@ -47,7 +45,7 @@ FORCE_INLINE uint64_t SpecSW_tx_read(uint64_t* addr)
 	return val;
 } 
 
-FORCE_INLINE void SpecSW_tx_write(uint64_t* addr)
+FORCE_INLINE void SpecSW_tx_write(uint64_t* addr, uint64_t val)
 {
 	if(tx[tx_id].status == INVALID)
 		longjmp(tx[tx_id].scope, 1); // restart
@@ -55,7 +53,7 @@ FORCE_INLINE void SpecSW_tx_write(uint64_t* addr)
 	tx[tx_id].write_filter.add(addr);
 	//add addr, val to local hash table
 	// val = *addr
-	tx->write_set->insert(WriteSetEntry((void**)addr, *((uint64_t*)addr)));
+	tx->write_set->insert(WriteSetEntry((void**)addr, val));
 }
 
 FORCE_INLINE bool iBalance(struct Tx_Context *commitTx, struct Tx_Context *conflicts, int conflicts_size)

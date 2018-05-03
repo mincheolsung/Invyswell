@@ -1,6 +1,6 @@
 #ifndef __LIGHTHW__
 #define __LIGHTHW__
-#include "invyswell.h"
+#include "test_threads.hpp"
 
 FORCE_INLINE void LightHW_tx_end(void)
 {

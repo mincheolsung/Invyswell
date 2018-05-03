@@ -1,8 +1,7 @@
 #ifndef __BFHW__
 #define __BFHW__
 
-
-#include "invyswell.h"
+#include "test_threads.hpp"
 
 FORCE_INLINE void BFHW_tx_read(uint64_t *addr)
 {

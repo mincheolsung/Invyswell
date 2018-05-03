@@ -1,7 +1,7 @@
 #ifndef __SGLSW_HPP__
 #define __SGLSW_HPP__
 
-#include "invyswell.h"
+#include "test_threads.hpp"
 
 FORCE_INLINE void SglSW_tx_begin(void)
 {

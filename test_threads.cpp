@@ -8,20 +8,20 @@
 #include <sys/sem.h>
 
 #include <errno.h>
-#include "tm/invyswell.h"
-#include "tm/SpecSW.hpp"
-#include "tm/WriteSet.hpp"
-#include "tm/IrrevocSW.hpp"
-#include "tm/SglSW.hpp"
-#include "tm/LightHW.hpp"
-#include "tm/BFHW.hpp"
+#include "tm/test_threads.hpp"
+#include "tm/Invyswell.hpp"
+
+//#include "tm/SpecSW.hpp"
+//#include "tm/WriteSet.hpp"
+//#include "tm/IrrevocSW.hpp"
+//#include "tm/SglSW.hpp"
+//#include "tm/LightHW.hpp"
+//#include "tm/BFHW.hpp"
 
 #define CFENCE  __asm__ volatile ("":::"memory")
 #define MFENCE  __asm__ volatile ("mfence":::"memory")
 
-
-volatile int counter = 0;
-volatile int lock = 0;
+uint64_t counter = 0;
 
 //int total_threads;
 
@@ -63,44 +63,42 @@ void* th_run(void * args)
 {
 
 	long id = (long)args;
-	int localCounter = 0;
+	/* tx_id is thread-local variable */
+	tx_id = id;
+
+	uint64_t localCounter = 0;
 
 	barrier(0);
 		
-	int inHTM = 0;
-	int inGL = 0;
-	for (int i=0; i<1000000; i++) {
-		int attempts = 5;
-		again: while (lock == 1) {}
-		unsigned int status = _xbegin();
-		if(status == _XBEGIN_STARTED){
-			if (lock == 1) _xabort(1);
-			//Code for HTM path
-			
-			BFHW_tx_read(NULL);
-			BFHW_tx_write(NULL);
-			
-			counter++;
-			localCounter++;
-			_xend();
-			inHTM++;
-		} else if (attempts > 0) {
-			attempts--;
+	//int inHTM = 0;
+	//int inSTM = 0;
+
+	for (int i=0; i<1000000; i++) 
+	{
+		tx[tx_id].type = 0;
+		tx[tx_id].attempts = 5;
+again:	
+		INVYSWELL_TX_BEGIN
+		if (status == _XBEGIN_STARTED || status == 0)
+		{
+			//Code for HTM path	
+			invyswell_tx_write(&counter, invyswell_tx_read(&counter) + 1);
+			localCounter++;	
+			invyswell_tx_end();
+		}
+		else if (tx[tx_id].attempts > 0)
+		{
+			tx[tx_id].attempts--;
 			goto again;
-		} else {
-			while(!__sync_bool_compare_and_swap(&lock, 0, 1)){}
-				//Code for SW path with instrumented read/write
-				SpecSW_tx_read(NULL);
-				SpecSW_tx_write(NULL);
-
-
-				counter++;
-				localCounter++;
-			lock = 0;
-			inGL++;
+		}
+		else
+		{
+			tx[tx_id].type++;
+			tx[tx_id].attempts = 5;
+			goto again;
 		}
 	}
- 	printf("Thread %ld local counter = %d and global counter = %d. In HTM = %d, in GL = %d\n", id, localCounter, counter, inHTM, inGL); 
+ 	printf("Thread %ld local counter = %lu and global counter = %lu\n", id, localCounter, counter); 
 	return 0;
 }
 
@@ -134,7 +132,7 @@ int main(int argc, char* argv[])
 	}
 	
 	printf("Total time = %lld ns\n", get_real_time() - start);
-	printf("Counter = %d\n", counter);
+	printf("Counter = %lu\n", counter);
 
 	return 0;
 }
