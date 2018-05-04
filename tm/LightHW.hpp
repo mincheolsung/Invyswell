@@ -4,7 +4,7 @@
 
 FORCE_INLINE void LightHW_tx_end(void)
 {
-	if (pthread_mutex_trylock(&commit_lock) == 0 && sw_cnt == 0)
+	if ((pthread_mutex_trylock(&commit_lock) == 0) && (sw_cnt == 0))
 	{
 		pthread_mutex_unlock(&commit_lock);
 		_xend();

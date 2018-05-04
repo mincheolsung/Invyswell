@@ -40,12 +40,12 @@ enum Tx_Stauts
 };
 
 /*Global Variables*/
-int total_threads;
-unsigned long commit_sequence;
-unsigned long sw_cnt;
-pthread_mutex_t commit_lock;
-unsigned long hw_post_commit;
-bool canAbort;
+extern int total_threads;
+extern unsigned long commit_sequence;
+extern unsigned long sw_cnt;
+extern pthread_mutex_t commit_lock;
+extern unsigned long hw_post_commit;
+extern bool canAbort;
 
 thread_local int tx_id;
 
@@ -71,8 +71,6 @@ FORCE_INLINE void thread_init(int id)
 {
 	tx[id].write_set = new WriteSet(ACCESS_SIZE);
 	tx[id].read_set = new WriteSet(ACCESS_SIZE);
-	if (pthread_mutex_init(&commit_lock, NULL) != 0)
-		printf("commit_lock init fails\n");
 }
 
 #endif

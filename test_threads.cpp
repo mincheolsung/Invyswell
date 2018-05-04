@@ -14,6 +14,13 @@
 #define CFENCE  __asm__ volatile ("":::"memory")
 #define MFENCE  __asm__ volatile ("mfence":::"memory")
 
+int total_threads = 0;
+unsigned long commit_sequence = 0;
+unsigned long sw_cnt = 0;
+pthread_mutex_t commit_lock = PTHREAD_MUTEX_INITIALIZER;
+unsigned long hw_post_commit = 0;
+bool canAbort = false;
+
 uint64_t counter = 0;
 
 inline unsigned long long get_real_time() {
@@ -72,32 +79,31 @@ void* th_run(void * args)
 		tx[tx_id].attempts = 5;
 again:	
 		INVYSWELL_TX_BEGIN
-		if (status == _XBEGIN_STARTED || status == 0)
+		if (status == _XBEGIN_STARTED || status == _STM_STARTED)
 		{
 			uint64_t value = invyswell_tx_read(&counter);
 			invyswell_tx_write(&counter, value + 1);
 			localCounter++;	
 			invyswell_tx_end();
-			if (status == _XBEGIN_STARTED)
-				inHTM++;
-			else if (status == 0)
-				inSTM++;
+			inHTM++;
 		}
 		else if (tx[tx_id].attempts > 0)
 		{
-			//printf("1: HTM:%d, STM:%d\n", inHTM, inSTM);
+			//printf("1: inHTM:%d\n", inHTM);
 			tx[tx_id].attempts--;
 			goto again;
 		}
 		else
 		{
+			//printf("2: inHTM:%d\n",inHTM);
+#if 0
 			if (tx[tx_id].type == 1)
 			{
 				tx[tx_id].attempts = 5;
 				goto again;
 			}
-			//printf("2: HTM:%d, STM:%d\n", inHTM, inSTM);
-			tx[tx_id].type++;
+#endif
+			//tx[tx_id].type++;
 			tx[tx_id].attempts = 5;
 			goto again;
 		}
