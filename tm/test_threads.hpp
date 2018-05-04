@@ -45,7 +45,7 @@ unsigned long commit_sequence;
 unsigned long sw_cnt;
 pthread_mutex_t commit_lock;
 unsigned long hw_post_commit;
-bool canAbort;
+//bool canAbort;
 
 thread_local int tx_id;
 
@@ -67,12 +67,26 @@ struct Tx_Context
 
 struct Tx_Context tx[300];
 
-FORCE_INLINE void thread_init(int id)
-{
+
+FORCE_INLINE void thread_init(int id){
+	tx[id].id = id;
 	tx[id].write_set = new WriteSet(ACCESS_SIZE);
 	tx[id].read_set = new WriteSet(ACCESS_SIZE);
+	tx[id].status = VALID;
+}
+
+FORCE_INLINE void tm_sys_init(){
+	commit_sequence = 0;
+	sw_cnt = 0;
+	hw_post_commit = 0;
+}
+/*
+stm::WriteSet::WriteSet(const size_t initial_capacity)
+{
+//	tx[tx_id].write_set = new WriteSet(ACCESS_SIZE);
+//	tx[tx_id].read_set = new WriteSet(ACCESS_SIZE);
 	if (pthread_mutex_init(&commit_lock, NULL) != 0)
 		printf("commit_lock init fails\n");
 }
-
+*/
 #endif

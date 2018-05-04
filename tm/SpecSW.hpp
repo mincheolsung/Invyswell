@@ -7,6 +7,7 @@
 {														\
 	unsigned long sw_cnt;								\
 	tx[tx_id].priority = 0;								\
+	uint32_t abort_flags = _setjmp(tx[tx_id].scope);				\
 	tx[tx_id].priority++;								\
 	__sync_fetch_and_add(&sw_cnt, 1);					\
 	do													\
@@ -21,14 +22,14 @@ FORCE_INLINE void validate(void)
 	if(tx[tx_id].local_cs != commit_sequence)
 		longjmp(tx[tx_id].scope, 1); // restart
 
-	if(pthread_mutex_trylock(&commit_lock))
+	if(pthread_mutex_trylock(&commit_lock) != 0)
 		longjmp(tx[tx_id].scope, 1); // restart
 	else 
 		pthread_mutex_unlock(&commit_lock);
 
 	while(hw_post_commit != 0);
 
-	if(tx[tx_id].status = INVALID)
+	if(tx[tx_id].status == INVALID)
 		longjmp(tx[tx_id].scope, 1); // restart
 }
 
@@ -110,7 +111,7 @@ FORCE_INLINE bool iBalance(struct Tx_Context *commitTx, struct Tx_Context *confl
 FORCE_INLINE bool CM_can_commit()
 {
 	struct Tx_Context conflicts[300];
-	int conflicts_size;
+	int conflicts_size = 0;
 
 	//compare write set with read set of in-flight transactions and make set named conflicts
 	for(int i=0, conflicts_size=0; i<total_threads; i++)
