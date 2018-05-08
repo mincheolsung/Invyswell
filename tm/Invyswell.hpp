@@ -26,7 +26,6 @@
 		break;											\
 	/* SpecSW */										\
 	case 2:												\
-		printf("SpecSW begin\n");						\
 		if (tx[tx_id].attempts == 0)					\
 		{												\
 			status = _STM_STOPPED;						\

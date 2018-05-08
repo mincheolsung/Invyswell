@@ -78,12 +78,15 @@ FORCE_INLINE void thread_init(int id){
 	tx[id].write_set = new WriteSet(ACCESS_SIZE);
 	tx[id].read_set = new WriteSet(ACCESS_SIZE);
 	tx[id].status = VALID;
+	tx[id].inflight = false;
 }
 
 FORCE_INLINE void tm_sys_init(){
+	commit_lock = 0;
 	commit_sequence = 0;
 	sw_cnt = 0;
 	hw_post_commit = 0;
+	total_threads = 0;
 }
 
 #endif

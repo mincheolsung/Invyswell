@@ -14,12 +14,12 @@
 #define CFENCE  __asm__ volatile ("":::"memory")
 #define MFENCE  __asm__ volatile ("mfence":::"memory")
 
-int total_threads = 0;
-unsigned long commit_sequence = 0;
-unsigned long sw_cnt = 0;
-pthread_mutex_t commit_lock = PTHREAD_MUTEX_INITIALIZER;
-unsigned long hw_post_commit = 0;
-bool canAbort = false;
+//int total_threads = 0;
+//unsigned long commit_sequence = 0;
+//unsigned long sw_cnt = 0;
+//pthread_mutex_t commit_lock = PTHREAD_MUTEX_INITIALIZER;
+//unsigned long hw_post_commit = 0;
+//bool canAbort = false;
 
 uint64_t counter = 0;
 
@@ -73,9 +73,9 @@ void* th_run(void * args)
 	int inHTM = 0;
 	int inSTM = 0;
 
-	for (int i=0; i<1000000; i++) 
+	for (int i=0; i<1000; i++) 
 	{
-		tx[tx_id].type = 0;
+		tx[tx_id].type = 2;
 		tx[tx_id].attempts = 5;
 again:	
 		INVYSWELL_TX_BEGIN
@@ -121,6 +121,8 @@ int main(int argc, char* argv[])
 		printf("Usage test threads#\n");
 		exit(0);
 	}
+	
+	tm_sys_init();
 
     total_threads = atoi(argv[1]);
 

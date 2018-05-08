@@ -24,10 +24,10 @@ FORCE_INLINE void BFHW_tx_end(void)
 	{
 		for (int id = 0; id < total_threads; id++ )
 		{
-			/*
+			
 			if (id == tx_id)
 				continue;
-			*/
+			
 			if (tx[id].inflight)
 				if (tx[tx_id].write_filter.intersect(&tx[id].read_filter))
 					_xabort(1);

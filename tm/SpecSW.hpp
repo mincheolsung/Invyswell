@@ -3,17 +3,16 @@
 
 #include "test_threads.hpp"
 
-#define  SpecSW_TX_BEGIN								\
-{											\
-	tx[tx_id].priority = 0;								\
-	tx[tx_id].inflight = true;							\
-	_setjmp(tx[tx_id].scope);							\
-	tx[tx_id].priority++;								\
+#define  SpecSW_TX_BEGIN									\
+{															\
+	tx[tx_id].priority = 0;									\
+	tx[tx_id].inflight = true;								\
+	tx[tx_id].priority++;									\
 	__sync_fetch_and_add(&sw_cnt, 1);						\
-	do										\
-	{										\
-		tx[tx_id].local_cs = commit_sequence;					\
-	}										\
+	do														\
+	{														\
+		tx[tx_id].local_cs = commit_sequence;				\
+	}														\
 	while(tx[tx_id].local_cs & 1);							\
 }						
 
@@ -36,6 +35,7 @@ FORCE_INLINE void validate(void)
 
 FORCE_INLINE uint64_t SpecSW_tx_read(uint64_t* addr)
 {
+	//printf("Spec_read\n");
 	WriteSetEntry log((void**)addr);
     	bool found = tx[tx_id].write_set->find(log);
     	if (__builtin_expect(found, true))
@@ -49,9 +49,12 @@ FORCE_INLINE uint64_t SpecSW_tx_read(uint64_t* addr)
 
 FORCE_INLINE void SpecSW_tx_write(uint64_t* addr, uint64_t val)
 {
+	//printf("Spec_write\n");
 	if(tx[tx_id].status == INVALID)
+	{
+		//printf("never\n");
 		longjmp(tx[tx_id].scope, 1); // restart
-
+	}
 	tx[tx_id].write_filter.add(addr);
 	//add addr, val to local hash table
 	tx->write_set->insert(WriteSetEntry((void**)addr, val));
@@ -158,7 +161,10 @@ FORCE_INLINE void invalidate(void)
 {
 	//compare write set with read set of in-flight transactions and invalidate if match
 	for(int i=0; i<total_threads; i++)
-	{ 
+	{
+		if (i == tx_id)
+			continue;
+
 		if(tx[i].inflight)
 			if(tx[tx_id].write_filter.intersect(&tx[i].read_filter))
 			{
