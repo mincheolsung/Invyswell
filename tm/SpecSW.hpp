@@ -4,31 +4,33 @@
 #include "test_threads.hpp"
 
 #define  SpecSW_TX_BEGIN								\
-{														\
-	unsigned long sw_cnt;								\
+{											\
 	tx[tx_id].priority = 0;								\
+	tx[tx_id].inflight = true;							\
+	_setjmp(tx[tx_id].scope);							\
 	tx[tx_id].priority++;								\
-	__sync_fetch_and_add(&sw_cnt, 1);					\
-	do													\
-	{													\
-		tx[tx_id].local_cs = commit_sequence;			\
-	}													\
-	while(tx[tx_id].local_cs & 1);						\
+	__sync_fetch_and_add(&sw_cnt, 1);						\
+	do										\
+	{										\
+		tx[tx_id].local_cs = commit_sequence;					\
+	}										\
+	while(tx[tx_id].local_cs & 1);							\
 }						
 
 FORCE_INLINE void validate(void)
 {
 	if(tx[tx_id].local_cs != commit_sequence)
 		longjmp(tx[tx_id].scope, 1); // restart
-
-	if(pthread_mutex_trylock(&commit_lock))
-		longjmp(tx[tx_id].scope, 1); // restart
-	else 
-		pthread_mutex_unlock(&commit_lock);
+	
+	if(commit_lock)
+	{
+		if (GET_VERSION(commit_lock) != tx_id)
+			longjmp(tx[tx_id].scope, 1); // restart
+	}
 
 	while(hw_post_commit != 0);
 
-	if(tx[tx_id].status = INVALID)
+	if(tx[tx_id].status == INVALID)
 		longjmp(tx[tx_id].scope, 1); // restart
 }
 
@@ -52,7 +54,6 @@ FORCE_INLINE void SpecSW_tx_write(uint64_t* addr, uint64_t val)
 
 	tx[tx_id].write_filter.add(addr);
 	//add addr, val to local hash table
-	// val = *addr
 	tx->write_set->insert(WriteSetEntry((void**)addr, val));
 }
 
@@ -63,7 +64,7 @@ FORCE_INLINE bool iBalance(struct Tx_Context *commitTx, struct Tx_Context *confl
 
 	int abortPrio = 0, abortSetSize = 0, highestPrio = 0;
 	bool mostReads = true, mostWrites = true;
-	bool fewestCommits = true, canAbort = false;
+	bool /*fewestCommits = true, */canAbort = false;
 
 	for(int i=0; i<conflicts_size; i++)
 	{
@@ -110,10 +111,10 @@ FORCE_INLINE bool iBalance(struct Tx_Context *commitTx, struct Tx_Context *confl
 FORCE_INLINE bool CM_can_commit()
 {
 	struct Tx_Context conflicts[300];
-	int conflicts_size;
+	int conflicts_size = 0;
 
 	//compare write set with read set of in-flight transactions and make set named conflicts
-	for(int i=0, conflicts_size=0; i<total_threads; i++)
+	for(int i=0; i<total_threads; i++)
 	{ 
 		if(tx[i].inflight)
 			if(tx[tx_id].write_filter.intersect(&tx[i].read_filter))
@@ -139,7 +140,12 @@ FORCE_INLINE void SpecSW_tx_end(void)
 		return;
 	}
 
-	pthread_mutex_lock(&commit_lock);
+	while (!TRY_LOCK(commit_lock))
+	{
+		printf("try to lock\n");
+	}
+	SET_VERSION(commit_lock, tx_id);
+
 	validate();
 	if(!CM_can_commit())
 		longjmp(tx[tx_id].scope, 1); // restart
@@ -165,7 +171,7 @@ FORCE_INLINE void invalidate(void)
 FORCE_INLINE void SpecSW_tx_post_commit()
 {
 	invalidate();
-	pthread_mutex_unlock(&commit_lock);
+	UNLOCK(commit_lock);
 }
 
 #endif

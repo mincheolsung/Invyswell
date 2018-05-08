@@ -6,7 +6,9 @@
 
 FORCE_INLINE void IrrevocSW_tx_begin(void)
 {
-	pthread_mutex_lock(&commit_lock);	
+	while (!TRY_LOCK(commit_lock))
+	{}
+	SET_VERSION(commit_lock, tx_id);
 }
 
 FORCE_INLINE void IrrevocSW_tx_read(uint64_t* addr)
@@ -28,7 +30,7 @@ FORCE_INLINE void IrrevocSW_tx_post_commit(void)
 	if(tx[tx_id].write_set->size() != 0) //read-only
 		invalidate();
 
-	pthread_mutex_unlock(&commit_lock);
+	UNLOCK(commit_lock);
 }
 
 #endif

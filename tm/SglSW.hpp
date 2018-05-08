@@ -5,14 +5,16 @@
 
 FORCE_INLINE void SglSW_tx_begin(void)
 {
-	pthread_mutex_lock(&commit_lock);	
+	while(!TRY_LOCK(commit_lock))
+	{}
+	SET_VERSION(commit_lock, tx_id);
 	++commit_sequence;
 }
 
 FORCE_INLINE void SglSW_tx_end(void)
 {
 	++commit_sequence;
-	pthread_mutex_unlock(&commit_lock);
+	UNLOCK(commit_lock);
 }
 
 #endif

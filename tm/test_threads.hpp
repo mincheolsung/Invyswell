@@ -30,6 +30,12 @@
 #define FCC 3
 #define SC  3
 
+#define IS_LOCKED(lock) lock & 1 == 1
+#define UNLOCK(lock) lock = 0
+#define GET_VERSION(lock) lock >> 1
+#define SET_VERSION(lock, new_ver) lock = new_ver << 1 | 1
+#define TRY_LOCK(lock) __sync_bool_compare_and_swap(&(lock), (lock) & ~1, lock | 1)
+
 using stm::WriteSetEntry;
 using stm::WriteSet;
 
@@ -40,12 +46,11 @@ enum Tx_Stauts
 };
 
 /*Global Variables*/
-extern int total_threads;
-extern unsigned long commit_sequence;
-extern unsigned long sw_cnt;
-extern pthread_mutex_t commit_lock;
-extern unsigned long hw_post_commit;
-extern bool canAbort;
+int total_threads;
+unsigned long commit_sequence;
+unsigned long sw_cnt;
+volatile unsigned int commit_lock;
+unsigned long hw_post_commit;
 
 thread_local int tx_id;
 
@@ -57,20 +62,28 @@ struct Tx_Context
 	BitFilter<FILTER_SIZE> read_filter;
 	WriteSet *write_set;
 	WriteSet *read_set;
-	unsigned long local_cs;
 	int status;
 	bool inflight;
 	int priority;
 	int type;
 	int attempts;
+	uint64_t local_cs;
 };
 
 struct Tx_Context tx[300];
 
-FORCE_INLINE void thread_init(int id)
-{
+
+FORCE_INLINE void thread_init(int id){
+	tx[id].id = id;
 	tx[id].write_set = new WriteSet(ACCESS_SIZE);
 	tx[id].read_set = new WriteSet(ACCESS_SIZE);
+	tx[id].status = VALID;
+}
+
+FORCE_INLINE void tm_sys_init(){
+	commit_sequence = 0;
+	sw_cnt = 0;
+	hw_post_commit = 0;
 }
 
 #endif
