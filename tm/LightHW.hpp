@@ -4,11 +4,8 @@
 
 FORCE_INLINE void LightHW_tx_end(void)
 {
-	if ((pthread_mutex_trylock(&commit_lock) == 0) && (sw_cnt == 0))
-	{
-		pthread_mutex_unlock(&commit_lock);
+	if (!commit_lock && !sw_cnt)
 		_xend();
-	}
 	else 
 		_xabort(1);
 }
