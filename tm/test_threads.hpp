@@ -33,7 +33,7 @@
 #define IS_LOCKED(lock) lock & 1 == 1
 #define UNLOCK(lock) lock = 0
 #define GET_VERSION(lock) lock >> 1
-#define SET_VERSION(lock, new_ver) lock = new_ver << 1 | 1
+#define SET_VERSION(lock, new_ver) lock = ((new_ver << 1) | 1)
 #define TRY_LOCK(lock) __sync_bool_compare_and_swap(&(lock), (lock) & ~1, lock | 1)
 
 using stm::WriteSetEntry;

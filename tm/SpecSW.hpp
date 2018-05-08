@@ -8,6 +8,7 @@
 	tx[tx_id].priority = 0;									\
 	tx[tx_id].inflight = true;								\
 	tx[tx_id].priority++;									\
+	tx[tx_id].status = VALID;								\
 	__sync_fetch_and_add(&sw_cnt, 1);						\
 	do														\
 	{														\
@@ -23,22 +24,22 @@ FORCE_INLINE void validate(void)
 	
 	if(commit_lock)
 	{
-		if (GET_VERSION(commit_lock) != tx_id)
+		if (GET_VERSION(commit_lock) != (tx_id+1))
 			longjmp(tx[tx_id].scope, 1); // restart
 	}
 
-	while(hw_post_commit != 0);
+	while(hw_post_commit != 0){}
 
 	if(tx[tx_id].status == INVALID)
 		longjmp(tx[tx_id].scope, 1); // restart
+
 }
 
 FORCE_INLINE uint64_t SpecSW_tx_read(uint64_t* addr)
 {
-	//printf("Spec_read\n");
 	WriteSetEntry log((void**)addr);
-    	bool found = tx[tx_id].write_set->find(log);
-    	if (__builtin_expect(found, true))
+    if (tx[tx_id].write_filter.lookup(addr)	&& tx[tx_id].write_set->find(log))
+    	//if (__builtin_expect(found, true))
 		return log.val;	
 
 	tx[tx_id].read_filter.add(addr);
@@ -49,15 +50,12 @@ FORCE_INLINE uint64_t SpecSW_tx_read(uint64_t* addr)
 
 FORCE_INLINE void SpecSW_tx_write(uint64_t* addr, uint64_t val)
 {
-	//printf("Spec_write\n");
 	if(tx[tx_id].status == INVALID)
-	{
-		//printf("never\n");
 		longjmp(tx[tx_id].scope, 1); // restart
-	}
+	
 	tx[tx_id].write_filter.add(addr);
 	//add addr, val to local hash table
-	tx->write_set->insert(WriteSetEntry((void**)addr, val));
+	tx[tx_id].write_set->insert(WriteSetEntry((void**)addr, *((uint64_t*)(&val))));
 }
 
 FORCE_INLINE bool iBalance(struct Tx_Context *commitTx, struct Tx_Context *conflicts, int conflicts_size)
@@ -142,12 +140,10 @@ FORCE_INLINE void SpecSW_tx_end(void)
 		 __sync_fetch_and_sub(&sw_cnt, 1);	
 		return;
 	}
-
-	while (!TRY_LOCK(commit_lock))
-	{
-		printf("try to lock\n");
-	}
-	SET_VERSION(commit_lock, tx_id);
+	
+	if (GET_VERSION(commit_lock) != (tx_id + 1))
+		while (!TRY_LOCK(commit_lock)){}
+	SET_VERSION(commit_lock, tx_id+1);
 
 	validate();
 	if(!CM_can_commit())

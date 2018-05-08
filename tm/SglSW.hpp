@@ -7,7 +7,7 @@ FORCE_INLINE void SglSW_tx_begin(void)
 {
 	while(!TRY_LOCK(commit_lock))
 	{}
-	SET_VERSION(commit_lock, tx_id);
+	SET_VERSION(commit_lock, tx_id+1);
 	++commit_sequence;
 }
 

@@ -16,12 +16,10 @@
 	switch(tx[tx_id].type) {							\
 	/* LightHW */										\
 	case 0:												\
-		/*printf("LightHW begin\n");*/					\
 		status = _xbegin();								\
 		break;											\
 	/* BFHW */											\
 	case 1:												\
-		printf("BFHW begin\n");							\
 		status = _xbegin();								\
 		break;											\
 	/* SpecSW */										\
@@ -37,7 +35,6 @@
 		break;											\
 	/* SglSW */											\
 	case 3:												\
-		printf("SglSW begin\n");						\
 		if (tx[tx_id].attempts == 0)					\
 		{												\
 			status = _STM_STOPPED;						\
@@ -48,7 +45,6 @@
 		break;											\
 	/* IrrevocSW */										\
 	case 4:												\
-		printf("IrrevocSW begin\n");					\
 		if (tx[tx_id].attempts == 0)					\
 		{												\
 			status = _STM_STOPPED;						\

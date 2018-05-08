@@ -89,13 +89,11 @@ again:
 		}
 		else if (tx[tx_id].attempts > 0)
 		{
-			//printf("1: inHTM:%d\n", inHTM);
 			tx[tx_id].attempts--;
 			goto again;
 		}
 		else
 		{
-			//printf("2: inHTM:%d\n",inHTM);
 #if 0
 			if (tx[tx_id].type == 1)
 			{

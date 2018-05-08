@@ -6,9 +6,10 @@
 
 FORCE_INLINE void IrrevocSW_tx_begin(void)
 {
-	while (!TRY_LOCK(commit_lock))
-	{}
-	SET_VERSION(commit_lock, tx_id);
+	if (GET_VERSION(commit_lock) != (tx_id + 1))
+		while (!TRY_LOCK(commit_lock)){}
+
+	SET_VERSION(commit_lock, tx_id+1);
 }
 
 FORCE_INLINE void IrrevocSW_tx_read(uint64_t* addr)
