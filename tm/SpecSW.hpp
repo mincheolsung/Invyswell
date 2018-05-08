@@ -38,8 +38,8 @@ FORCE_INLINE void validate(void)
 FORCE_INLINE uint64_t SpecSW_tx_read(uint64_t* addr)
 {
 	WriteSetEntry log((void**)addr);
-    if (tx[tx_id].write_filter.lookup(addr)	&& tx[tx_id].write_set->find(log))
-    	//if (__builtin_expect(found, true))
+    bool found = tx[tx_id].write_set->find(log);
+	if (__builtin_expect(found, false))
 		return log.val;	
 
 	tx[tx_id].read_filter.add(addr);
@@ -146,6 +146,7 @@ FORCE_INLINE void SpecSW_tx_end(void)
 	SET_VERSION(commit_lock, tx_id+1);
 
 	validate();
+
 	if(!CM_can_commit())
 		longjmp(tx[tx_id].scope, 1); // restart
 
