@@ -21,12 +21,13 @@ FORCE_INLINE void validate(void)
 {
 	if(tx[tx_id].local_cs != commit_sequence)
 		longjmp(tx[tx_id].scope, 1); // restart
+	
+	if(commit_lock)
+	{
+		if (GET_VERSION(commit_lock) != tx_id)
+			longjmp(tx[tx_id].scope, 1); // restart
+	}
 
-/*	if(pthread_mutex_trylock(&commit_lock) != 0)
-		longjmp(tx[tx_id].scope, 1); // restart
-	else 
-		pthread_mutex_unlock(&commit_lock);
-*/
 	while(hw_post_commit != 0);
 
 	if(tx[tx_id].status == INVALID)
@@ -139,7 +140,12 @@ FORCE_INLINE void SpecSW_tx_end(void)
 		return;
 	}
 
-	pthread_mutex_lock(&commit_lock);
+	while (!TRY_LOCK(commit_lock))
+	{
+		printf("try to lock\n");
+	}
+	SET_VERSION(commit_lock, tx_id);
+
 	validate();
 	if(!CM_can_commit())
 		longjmp(tx[tx_id].scope, 1); // restart
@@ -165,7 +171,7 @@ FORCE_INLINE void invalidate(void)
 FORCE_INLINE void SpecSW_tx_post_commit()
 {
 	invalidate();
-	pthread_mutex_unlock(&commit_lock);
+	UNLOCK(commit_lock);
 }
 
 #endif

@@ -19,9 +19,9 @@
 #define CFENCE  __asm__ volatile ("":::"memory")
 #define MFENCE  __asm__ volatile ("mfence":::"memory")
 
-#define NO_OF_ACCOUNTS 1000000
+#define NO_OF_ACCOUNTS 10000
 #define INITIAL_BALANCE 1000
-#define TOTAL_TRANSACTIONS 100000
+#define TOTAL_TRANSACTIONS 100
 #define BALANCE_TRANSFER 50
 #define HASH 1
 #define LOCAL_TRANSFER 10
@@ -89,13 +89,14 @@ void* th_run(void * args)
 	thread_init(id);
         barrier(0);
         for (int i=0; i<local_transaction; i++) {
-
-          	SpecSW_TX_BEGIN
-
+			SpecSW_TX_BEGIN
                 for(int j=0; j<LOCAL_TRANSFER; j++){
-
+						
+          				printf("1\n");
                         dst_account = random_numbers[x+id*local_transaction*LOCAL_TRANSFER][0];
+          				printf("2\n");
                         src_account = random_numbers[x+id*local_transaction*LOCAL_TRANSFER][1];
+          				printf("3\n");
                         //remember serializing in chronological order
                         x++;
 
@@ -103,12 +104,15 @@ void* th_run(void * args)
                                 continue;//goto begin;
                         if((dst_balance = SpecSW_tx_read(&accounts[dst_account])) < 0)
                                 continue;//goto begin;
+          				
+						printf("4\n");
 
                         if(src_balance >= BALANCE_TRANSFER)
                         {
                                 SpecSW_tx_write(&accounts[src_account], src_balance - BALANCE_TRANSFER);
                                 SpecSW_tx_write(&accounts[dst_account], dst_balance + BALANCE_TRANSFER);
                         }
+						printf("5\n");
                 }
 
                 SpecSW_tx_end();
@@ -235,6 +239,12 @@ int main(int argc, char* argv[])
                 pthread_mutex_destroy(&locks[i].lc);
 */
         sum = sum_of_accounts();
+
+		//for (int i =0 ; i< NO_OF_ACCOUNTS; i++)
+		//	printf("account: %lld\n", accounts[i]);
+
+
+
         printf("Total Balance after transactions = %llu\n", sum);
 
         return 0;

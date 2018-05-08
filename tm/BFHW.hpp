@@ -15,9 +15,8 @@ FORCE_INLINE void BFHW_tx_write(uint64_t *addr)
 
 FORCE_INLINE void BFHW_tx_end(void)
 {
-	if (pthread_mutex_trylock(&commit_lock) == 0)
+	if (!commit_lock)
 	{
-		pthread_mutex_unlock(&commit_lock);
 		++hw_post_commit;
 		_xend();
 	}
