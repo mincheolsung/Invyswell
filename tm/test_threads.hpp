@@ -45,7 +45,6 @@ unsigned long commit_sequence;
 unsigned long sw_cnt;
 pthread_mutex_t commit_lock;
 unsigned long hw_post_commit;
-//bool canAbort;
 
 thread_local int tx_id;
 
@@ -57,12 +56,12 @@ struct Tx_Context
 	BitFilter<FILTER_SIZE> read_filter;
 	WriteSet *write_set;
 	WriteSet *read_set;
-	unsigned long local_cs;
 	int status;
 	bool inflight;
 	int priority;
 	int type;
 	int attempts;
+	uint64_t local_cs;
 };
 
 struct Tx_Context tx[300];

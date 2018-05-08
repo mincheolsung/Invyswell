@@ -4,17 +4,17 @@
 #include "test_threads.hpp"
 
 #define  SpecSW_TX_BEGIN								\
-{														\
-	unsigned long sw_cnt;								\
+{											\
 	tx[tx_id].priority = 0;								\
-	uint32_t abort_flags = _setjmp(tx[tx_id].scope);				\
+	tx[tx_id].inflight = true;							\
+	_setjmp(tx[tx_id].scope);							\
 	tx[tx_id].priority++;								\
-	__sync_fetch_and_add(&sw_cnt, 1);					\
-	do													\
-	{													\
-		tx[tx_id].local_cs = commit_sequence;			\
-	}													\
-	while(tx[tx_id].local_cs & 1);						\
+	__sync_fetch_and_add(&sw_cnt, 1);						\
+	do										\
+	{										\
+		tx[tx_id].local_cs = commit_sequence;					\
+	}										\
+	while(tx[tx_id].local_cs & 1);							\
 }						
 
 FORCE_INLINE void validate(void)
@@ -53,7 +53,6 @@ FORCE_INLINE void SpecSW_tx_write(uint64_t* addr, uint64_t val)
 
 	tx[tx_id].write_filter.add(addr);
 	//add addr, val to local hash table
-	// val = *addr
 	tx->write_set->insert(WriteSetEntry((void**)addr, val));
 }
 
@@ -64,7 +63,7 @@ FORCE_INLINE bool iBalance(struct Tx_Context *commitTx, struct Tx_Context *confl
 
 	int abortPrio = 0, abortSetSize = 0, highestPrio = 0;
 	bool mostReads = true, mostWrites = true;
-	bool fewestCommits = true, canAbort = false;
+	bool /*fewestCommits = true, */canAbort = false;
 
 	for(int i=0; i<conflicts_size; i++)
 	{
@@ -114,7 +113,7 @@ FORCE_INLINE bool CM_can_commit()
 	int conflicts_size = 0;
 
 	//compare write set with read set of in-flight transactions and make set named conflicts
-	for(int i=0, conflicts_size=0; i<total_threads; i++)
+	for(int i=0; i<total_threads; i++)
 	{ 
 		if(tx[i].inflight)
 			if(tx[tx_id].write_filter.intersect(&tx[i].read_filter))

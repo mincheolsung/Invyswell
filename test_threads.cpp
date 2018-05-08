@@ -38,7 +38,7 @@ volatile int counter = 0;
 volatile int lock = 0;
 
 //int no_of_total_threads;
-uint64_t no_of_total_threads;
+int no_of_total_threads;
 int local_transaction;
 int random_numbers[TOTAL_TRANSACTIONS*LOCAL_TRANSFER][2];
 
@@ -141,7 +141,7 @@ void generate_random_numbers()
         int x=0;
 
         srand(time(NULL));
-        for(uint64_t i=0; i<no_of_total_threads; i++)
+        for(int i=0; i<no_of_total_threads; i++)
         {
                 min = 0;//i * NO_OF_ACCOUNTS / no_of_total_threads;
                 max = NO_OF_ACCOUNTS;//(i + 1) * NO_OF_ACCOUNTS / no_of_total_threads - 1;
@@ -182,7 +182,8 @@ int main(int argc, char* argv[])
 	signal(SIGINT, signal_callback_handler);
 	tm_sys_init();
 
-        unsigned long long sum = 0, i;
+        unsigned long long sum = 0;
+	int i;
         if (argc < 2) {
                 printf("Usage test threads#\n");
                 exit(0);
