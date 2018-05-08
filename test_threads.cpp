@@ -21,10 +21,10 @@
 
 #define NO_OF_ACCOUNTS 1000000
 #define INITIAL_BALANCE 1000
-#define TOTAL_TRANSACTIONS 10//0000
+#define TOTAL_TRANSACTIONS 100000
 #define BALANCE_TRANSFER 50
 #define HASH 1
-#define LOCAL_TRANSFER 2//10
+#define LOCAL_TRANSFER 10
 
 /*typedef struct account
 {
@@ -112,6 +112,7 @@ void* th_run(void * args)
                 }
 
                 SpecSW_tx_end();
+		SpecSW_tx_post_commit();
         }
 
         return 0;

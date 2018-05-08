@@ -22,11 +22,11 @@ FORCE_INLINE void validate(void)
 	if(tx[tx_id].local_cs != commit_sequence)
 		longjmp(tx[tx_id].scope, 1); // restart
 
-	if(pthread_mutex_trylock(&commit_lock) != 0)
+/*	if(pthread_mutex_trylock(&commit_lock) != 0)
 		longjmp(tx[tx_id].scope, 1); // restart
 	else 
 		pthread_mutex_unlock(&commit_lock);
-
+*/
 	while(hw_post_commit != 0);
 
 	if(tx[tx_id].status == INVALID)
