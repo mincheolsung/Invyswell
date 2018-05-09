@@ -9,6 +9,10 @@
 	tx[tx_id].inflight = true;								\
 	tx[tx_id].priority++;									\
 	tx[tx_id].status = VALID;								\
+	tx[tx_id].write_set->reset();							\
+	tx[tx_id].read_set->reset();							\
+	tx[tx_id].write_filter.clear();							\
+	tx[tx_id].read_filter.clear();							\
 	__sync_fetch_and_add(&sw_cnt, 1);						\
 	do														\
 	{														\
@@ -47,6 +51,7 @@ FORCE_INLINE uint64_t SpecSW_tx_read(uint64_t* addr)
 		return log.val;	
 
 	tx[tx_id].read_filter.add(addr);
+
 	uint64_t val = *addr;
 	validate();
 	return val;
@@ -58,7 +63,6 @@ FORCE_INLINE void SpecSW_tx_write(uint64_t* addr, uint64_t val)
 		longjmp(tx[tx_id].scope, 1); // restart
 	
 	tx[tx_id].write_filter.add(addr);
-	//add addr, val to local hash table
 	tx[tx_id].write_set->insert(WriteSetEntry((void**)addr, *((uint64_t*)(&val))));
 }
 
@@ -83,7 +87,7 @@ FORCE_INLINE bool iBalance(struct Tx_Context *commitTx, struct Tx_Context *confl
 			mostReads = false;
 
 		if(tx->write_set->size() > c->write_set->size())
-                        mostWrites = false;
+			mostWrites = false;
 
 		if(tx->priority > highestPrio)
 			highestPrio = tx->priority;
@@ -135,6 +139,7 @@ FORCE_INLINE bool CM_can_commit()
 FORCE_INLINE void commit(void)
 {
 	tx[tx_id].write_set->writeback();
+	CFENCE;
 }
 
 FORCE_INLINE void SpecSW_tx_end(void)

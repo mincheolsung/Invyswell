@@ -11,8 +11,8 @@
 #include "tm/test_threads.hpp"
 #include "tm/Invyswell.hpp"
 
-#define CFENCE  __asm__ volatile ("":::"memory")
-#define MFENCE  __asm__ volatile ("mfence":::"memory")
+//#define CFENCE  __asm__ volatile ("":::"memory")
+//#define MFENCE  __asm__ volatile ("mfence":::"memory")
 
 //int total_threads = 0;
 //unsigned long commit_sequence = 0;
@@ -75,7 +75,7 @@ void* th_run(void * args)
 
 	for (int i=0; i<1000; i++) 
 	{
-		tx[tx_id].type = 2;
+		tx[tx_id].type = 0;
 		tx[tx_id].attempts = 5;
 again:	
 		INVYSWELL_TX_BEGIN
@@ -94,14 +94,7 @@ again:
 		}
 		else
 		{
-#if 0
-			if (tx[tx_id].type == 1)
-			{
-				tx[tx_id].attempts = 5;
-				goto again;
-			}
-#endif
-			//tx[tx_id].type++;
+			tx[tx_id].type++;
 			tx[tx_id].attempts = 5;
 			goto again;
 		}

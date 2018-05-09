@@ -21,6 +21,9 @@
 #include "BitFilter.h"
 #include "WriteSet.hpp"
 
+#define CFENCE  __asm__ volatile ("":::"memory")
+#define MFENCE  __asm__ volatile ("mfence":::"memory")
+
 #define FORCE_INLINE __attribute__((always_inline)) inline
 
 #define ACCESS_SIZE 102400
@@ -38,6 +41,7 @@
 
 using stm::WriteSetEntry;
 using stm::WriteSet;
+
 
 enum Tx_Stauts
 {
@@ -89,4 +93,12 @@ FORCE_INLINE void tm_sys_init(){
 	total_threads = 0;
 }
 
+void fuck_barrier(int which)
+{
+	static volatile int barriers[16] = {0};
+	CFENCE;
+	__sync_fetch_and_add(&barriers[which], 1);
+	while(barriers[which] != total_threads) {}
+	CFENCE;
+}
 #endif
