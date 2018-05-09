@@ -64,9 +64,7 @@ void* th_run(void * args)
 	for (int i = 0; i < 100; i++) 
 	{
 		int acc1[1000];
-
 		int acc2[1000];
-
 		for (int j=0; j< 10; j++)
 		{
 				acc1[j] = rand_r_32(&seed) % ACCOUT_NUM;
@@ -115,7 +113,7 @@ again:
 			}
 		}
 	}
- 	printf("Thread %d local counter = %lu, LightHW = %d, BFHW = %d, SpecSW = %d, IrrevocSW = %d, SglSW = %d, racy_shared: %ld, fail_fast_happens on %d\n", \
+ 	printf("Thread %d local counter = %lu, LightHW = %d, BFHW = %d, SpecSW = %d, IrrevocSW = %d, SglSW = %d, racy_shared: %ld, fail-fast happens on %d\n", \
 			id, localCounter, tm_cnt[0], tm_cnt[1], tm_cnt[2], tm_cnt[3], tm_cnt[5], tx[tx_id].racy_shared, fail_fast_log); 
 	
 	return 0;
