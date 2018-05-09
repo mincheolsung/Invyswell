@@ -11,16 +11,6 @@
 #include "tm/test_threads.hpp"
 #include "tm/Invyswell.hpp"
 
-//#define CFENCE  __asm__ volatile ("":::"memory")
-//#define MFENCE  __asm__ volatile ("mfence":::"memory")
-
-//int total_threads = 0;
-//unsigned long commit_sequence = 0;
-//unsigned long sw_cnt = 0;
-//pthread_mutex_t commit_lock = PTHREAD_MUTEX_INITIALIZER;
-//unsigned long hw_post_commit = 0;
-//bool canAbort = false;
-
 uint64_t counter = 0;
 
 inline unsigned long long get_real_time() {
@@ -66,26 +56,36 @@ void* th_run(void * args)
 	/* initialize write_set, read_set, and commit_lock */
 	thread_init((int)id);
 
+	int tm_cnt[6];
+	for (int i = 0; i < 6; i++)
+		tm_cnt[i] = 0;
+
 	uint64_t localCounter = 0;
+	int fail_fast_log = -1;
 
 	barrier(0);
-		
-	int inHTM = 0;
-	int inSTM = 0;
 
 	for (int i=0; i<1000; i++) 
 	{
-		tx[tx_id].type = 0;
+		if (tx[tx_id].fail_fast || sw_cnt == 0)
+		{
+			if (tx[tx_id].fail_fast && fail_fast_log == -1)
+				fail_fast_log = i;
+			
+			tx[tx_id].type = 0;
+		}
+		else
+			tx[tx_id].type = 1;
+		
 		tx[tx_id].attempts = 5;
 again:	
 		INVYSWELL_TX_BEGIN
 		if (status == _XBEGIN_STARTED || status == _STM_STARTED)
 		{
-			uint64_t value = invyswell_tx_read(&counter);
-			invyswell_tx_write(&counter, value + 1);
+			invyswell_tx_write(&counter, invyswell_tx_read(&counter) + 1);
 			localCounter++;	
 			invyswell_tx_end();
-			inHTM++;
+			tm_cnt[tx[tx_id].type]++;
 		}
 		else if (tx[tx_id].attempts > 0)
 		{
@@ -94,13 +94,18 @@ again:
 		}
 		else
 		{
-			tx[tx_id].type++;
+			/* fast-fail mode */
+			if (tx[tx_id].fail_fast)
+				tx[tx_id].type = 5;
+			else
+				tx[tx_id].type++;
+			
 			tx[tx_id].attempts = 5;
 			goto again;
 		}
 	}
-	printf("commit_sequence: %lu\n", commit_sequence);
- 	printf("Thread %ld local counter = %lu and global counter = %lu, inHTM = %d, inSTM = %d\n", id, localCounter, counter, inHTM, inSTM); 
+ 	printf("Thread %ld local counter = %lu and global counter = %lu, LightHW = %d, BFHW = %d, SpecSW = %d, IrrevocSW = %d, SglSW = %d, fail_fast_happens on %d\n", id, localCounter, counter, tm_cnt[0], tm_cnt[1], tm_cnt[2], tm_cnt[3], tm_cnt[5], fail_fast_log); 
+	
 	return 0;
 }
 

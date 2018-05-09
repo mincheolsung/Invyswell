@@ -3,6 +3,8 @@
 
 #include "test_threads.hpp"
 
+#define RACY_THRESHOLD 2300
+
 #define  SpecSW_TX_BEGIN									\
 {															\
 	tx[tx_id].priority = 0;									\
@@ -24,7 +26,7 @@
 FORCE_INLINE void validate(void)
 {
 	if(tx[tx_id].local_cs != commit_sequence)
-		longjmp(tx[tx_id].scope, 1); // restart
+		goto jmp;
 	
 	if(IS_LOCKED(commit_lock))
 	{
@@ -32,15 +34,24 @@ FORCE_INLINE void validate(void)
 		{
 			int other = GET_VERSION(commit_lock) - 1;
 			if (tx[tx_id].read_filter.intersect(&tx[other].write_filter))
-				longjmp(tx[tx_id].scope, 1); // restart
+				goto jmp;
 		}
 	}
 
 	while(hw_post_commit != 0){}
 
 	if(tx[tx_id].status == INVALID)
-		longjmp(tx[tx_id].scope, 1); // restart
+		goto jmp;
 
+	return;
+
+jmp:
+	tx[tx_id].racy_shared++;
+	if (tx[tx_id].racy_shared > RACY_THRESHOLD)
+		tx[tx_id].fail_fast = 1;
+
+	longjmp(tx[tx_id].scope, 1); // restart
+	return;
 }
 
 FORCE_INLINE uint64_t SpecSW_tx_read(uint64_t* addr)
@@ -73,16 +84,14 @@ FORCE_INLINE bool iBalance(struct Tx_Context *commitTx, struct Tx_Context *confl
 
 	int abortPrio = 0, abortSetSize = 0, highestPrio = 0;
 	bool mostReads = true, mostWrites = true;
-	bool /*fewestCommits = true, */canAbort = false;
+	bool canAbort = false;
 
 	for(int i=0; i<conflicts_size; i++)
 	{
 		tx = &conflicts[i];
 		if(tx == NULL)
 			break;
-
-/*		if(tx->commits < c->commits)
-			fewestCommits = false;*/
+		
 		if(tx->read_set->size() > c->read_set->size())
 			mostReads = false;
 
@@ -97,18 +106,11 @@ FORCE_INLINE bool iBalance(struct Tx_Context *commitTx, struct Tx_Context *confl
 	}		
 
 	int p = c->priority;
-/*
-	if(fewestCommits)
-	{
-		p = p * FCC;
-		setSize = setSize * SC;
-	}
-*/
 
 	if(p >= highestPrio)
 		canAbort = true;
 
-	if(mostReads || mostWrites/* || fewestCommits*/)
+	if(mostReads || mostWrites)
 		canAbort = true;
 
 	if(setSize >= abortPrio + abortSetSize)
@@ -126,11 +128,13 @@ FORCE_INLINE bool CM_can_commit()
 	for(int i=0; i<total_threads; i++)
 	{ 
 		if(tx[i].inflight)
+		{
 			if(tx[tx_id].write_filter.intersect(&tx[i].read_filter))
 			{
 				conflicts[conflicts_size] =  tx[i];
 				conflicts_size++;
 			}
+		}
 	}
 
 	return iBalance(&(tx[tx_id]), conflicts, conflicts_size);
@@ -165,19 +169,19 @@ FORCE_INLINE void SpecSW_tx_end(void)
 
 FORCE_INLINE void invalidate(void)
 {
-	//compare write set with read set of in-flight transactions and invalidate if match
 	for(int i=0; i<total_threads; i++)
 	{
 		if (i == tx_id)
 			continue;
 
 		if(tx[i].inflight)
+		{
 			if(tx[tx_id].write_filter.intersect(&tx[i].read_filter))
 			{
 				tx[i].status = INVALID;
 			}
+		}
 	}
-
 }
 
 FORCE_INLINE void SpecSW_tx_post_commit()

@@ -20,6 +20,8 @@
 		break;											\
 	/* BFHW */											\
 	case 1:												\
+		tx[tx_id].write_filter.clear();					\
+		tx[tx_id].read_filter.clear();					\
 		status = _xbegin();								\
 		break;											\
 	/* SpecSW */										\
@@ -33,24 +35,24 @@
 		SpecSW_TX_BEGIN									\
 		status = _STM_STARTED;							\
 		break;											\
-	/* SglSW */											\
+	/* IrrevocSW */										\
 	case 3:												\
 		if (tx[tx_id].attempts == 0)					\
 		{												\
 			status = _STM_STOPPED;						\
 			break;										\
 		}												\
-		SglSW_tx_begin();								\
+		IrrevocSW_tx_begin();							\
 		status = _STM_STARTED;							\
 		break;											\
-	/* IrrevocSW */										\
-	case 4:												\
+	/* SglSW */											\
+	case 5:												\
 		if (tx[tx_id].attempts == 0)					\
 		{												\
 			status = _STM_STOPPED;						\
 			break;										\
 		}												\
-		IrrevocSW_tx_begin();							\
+		SglSW_tx_begin();								\
 		status = _STM_STARTED;							\
 		break;											\
 	default:											\
@@ -66,13 +68,13 @@ FORCE_INLINE uint64_t invyswell_tx_read(uint64_t *addr)
 
 	/* LightHW */
 	case 0:
-		value = *addr;	
+		value = *addr;
 		return value;
 
 	/* BFHW */
 	case 1:
 		BFHW_tx_read(addr);
-		value = *addr;	
+		value = *addr;
 		return value;
 
 	/* SpecSW */
@@ -80,16 +82,17 @@ FORCE_INLINE uint64_t invyswell_tx_read(uint64_t *addr)
 		value = SpecSW_tx_read(addr);
 		return value;
 
-	/* SglSW */
-	case 3:
-		value = *addr;
-		return value;
-
 	/* IrrevocSW */
-	case 4:
+	case 3:
 		IrrevocSW_tx_read(addr);
 		value = *addr;
 		return value;
+
+	/* SglSW */
+	case 5:
+		value = *addr;
+		return value;
+
 
 	default:
 		break;
@@ -104,13 +107,13 @@ FORCE_INLINE void invyswell_tx_write(uint64_t *addr, uint64_t value)
 
 	/* LightHW */
 	case 0:
-		*addr = value;	
+		*addr = value;
 		return;
 
 	/* BFHW */
 	case 1:
 		BFHW_tx_write(addr);
-		*addr = value;	
+		*addr = value;
 		return;
 
 	/* SpecSW */
@@ -118,14 +121,14 @@ FORCE_INLINE void invyswell_tx_write(uint64_t *addr, uint64_t value)
 		SpecSW_tx_write(addr, value);
 		return;
 
-	/* SglSW */
+	/* IrrevocSW */
 	case 3:
+		IrrevocSW_tx_write(addr);
 		*addr = value;
 		return;
 
-	/* IrrevocSW */
-	case 4:
-		IrrevocSW_tx_write(addr);
+	/* SglSW */
+	case 5:
 		*addr = value;
 		return;
 
@@ -155,20 +158,18 @@ FORCE_INLINE void invyswell_tx_end(void)
 		SpecSW_tx_post_commit();
 		return;
 
-	/* SglSW */
-	case 3:
-		SglSW_tx_end();
-		return;
-
 	/* IrrevocSW */
-	case 4:
+	case 3:
 		IrrevocSW_tx_end();
 		IrrevocSW_tx_post_commit();
+		return;
+
+	/* SglSW */
+	case 5:
+		SglSW_tx_end();
 		return;
 
 	default:
 		return;
 	}
 }
-
-

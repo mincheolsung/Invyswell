@@ -24,7 +24,6 @@ FORCE_INLINE void BFHW_tx_end(void)
 	{
 		for (int id = 0; id < total_threads; id++ )
 		{
-			
 			if (id == tx_id)
 				continue;
 			
@@ -39,7 +38,7 @@ FORCE_INLINE void BFHW_tx_end(void)
 
 FORCE_INLINE void BFHW_tx_post_commit(void)
 {
-	if(tx[tx_id].write_set->size() != 0) // !read-only
+	if (!tx[tx_id].write_filter.readonly()) // !read-only
 		invalidate();
 
 	__sync_fetch_and_sub(&hw_post_commit, 1);

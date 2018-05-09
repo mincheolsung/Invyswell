@@ -72,6 +72,8 @@ struct Tx_Context
 	int type;
 	int attempts;
 	uint64_t local_cs;
+	int fail_fast;
+	int racy_shared;
 };
 
 struct Tx_Context tx[300];
@@ -83,6 +85,8 @@ FORCE_INLINE void thread_init(int id){
 	tx[id].read_set = new WriteSet(ACCESS_SIZE);
 	tx[id].status = VALID;
 	tx[id].inflight = false;
+	tx[id].racy_shared = 0;
+	tx[id].fail_fast = 0;
 }
 
 FORCE_INLINE void tm_sys_init(){
