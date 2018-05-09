@@ -173,7 +173,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	printf("sum = %ld, matched = %d, changed %d\n", sum, sum == initSum, c);
+	printf("sum = %ld, matched = %d changed %d\n", sum, sum == initSum, c);
 
 	return 0;
 }
