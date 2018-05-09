@@ -26,6 +26,7 @@
 
 #define FORCE_INLINE __attribute__((always_inline)) inline
 
+#define RACY_THRESHOLD 100
 #define ACCESS_SIZE 102400
 #define FILTER_SIZE 4096
 #define WC  3
@@ -73,7 +74,7 @@ struct Tx_Context
 	int attempts;
 	uint64_t local_cs;
 	int fail_fast;
-	int racy_shared;
+	uint64_t racy_shared;
 };
 
 struct Tx_Context tx[300];

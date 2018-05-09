@@ -3,8 +3,6 @@
 
 #include "test_threads.hpp"
 
-#define RACY_THRESHOLD 2300
-
 #define  SpecSW_TX_BEGIN									\
 {															\
 	tx[tx_id].priority = 0;									\
