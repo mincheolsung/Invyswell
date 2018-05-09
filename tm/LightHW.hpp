@@ -4,7 +4,7 @@
 
 FORCE_INLINE void LightHW_tx_end(void)
 {
-	if (!commit_lock && !sw_cnt)
+	if (!IS_LOCKED(commit_lock) && !sw_cnt)
 		_xend();
 	else 
 		_xabort(1);

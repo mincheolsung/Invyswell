@@ -15,7 +15,7 @@ FORCE_INLINE void BFHW_tx_write(uint64_t *addr)
 
 FORCE_INLINE void BFHW_tx_end(void)
 {
-	if (!commit_lock)
+	if (!IS_LOCKED(commit_lock))
 	{
 		++hw_post_commit;
 		_xend();

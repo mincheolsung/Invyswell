@@ -22,10 +22,14 @@ FORCE_INLINE void validate(void)
 	if(tx[tx_id].local_cs != commit_sequence)
 		longjmp(tx[tx_id].scope, 1); // restart
 	
-	if(commit_lock)
+	if(IS_LOCKED(commit_lock))
 	{
 		if (GET_VERSION(commit_lock) != (tx_id+1))
-			longjmp(tx[tx_id].scope, 1); // restart
+		{
+			int other = GET_VERSION(commit_lock) - 1;
+			if (tx[tx_id].read_filter.intersect(&tx[other].write_filter))
+				longjmp(tx[tx_id].scope, 1); // restart
+		}
 	}
 
 	while(hw_post_commit != 0){}
