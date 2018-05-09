@@ -15,9 +15,8 @@ FORCE_INLINE void BFHW_tx_write(uint64_t *addr)
 
 FORCE_INLINE void BFHW_tx_end(void)
 {
-	if (pthread_mutex_trylock(&commit_lock) == 0)
+	if (!IS_LOCKED(commit_lock))
 	{
-		pthread_mutex_unlock(&commit_lock);
 		++hw_post_commit;
 		_xend();
 	}
@@ -25,10 +24,9 @@ FORCE_INLINE void BFHW_tx_end(void)
 	{
 		for (int id = 0; id < total_threads; id++ )
 		{
-			/*
 			if (id == tx_id)
 				continue;
-			*/
+			
 			if (tx[id].inflight)
 				if (tx[tx_id].write_filter.intersect(&tx[id].read_filter))
 					_xabort(1);
@@ -40,7 +38,7 @@ FORCE_INLINE void BFHW_tx_end(void)
 
 FORCE_INLINE void BFHW_tx_post_commit(void)
 {
-	if(tx[tx_id].write_set->size() != 0) // !read-only
+	if (!tx[tx_id].write_filter.readonly()) // !read-only
 		invalidate();
 
 	__sync_fetch_and_sub(&hw_post_commit, 1);

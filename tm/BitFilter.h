@@ -88,5 +88,14 @@
                   return true;
           return false;
       }
+
+	  bool readonly() volatile
+	  {
+		  for (uint32_t i = 0; i < WORD_BLOCKS; ++i)
+              if (word_filter[i] != 0)
+				  return false;
+
+		  return true;
+	  }
   }; 
 #endif
