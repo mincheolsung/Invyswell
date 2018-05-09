@@ -43,7 +43,6 @@
 using stm::WriteSetEntry;
 using stm::WriteSet;
 
-
 enum Tx_Stauts
 {
 	INVALID,

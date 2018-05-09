@@ -84,9 +84,10 @@ void* th_run(void * args)
 			tx[tx_id].type = 1;
 		
 		tx[tx_id].attempts = 5;
-again:	
+		
 		for (int j=0; j< 10; j++)
 		{
+again:
 			INVYSWELL_TX_BEGIN
 			if (status == _XBEGIN_STARTED || status == _STM_STARTED)
 			{
