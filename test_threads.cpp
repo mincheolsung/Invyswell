@@ -19,6 +19,7 @@ uint64_t* accountsAll;
 #define ACCOUT_NUM 1048576
 
 int cnt[300];
+int path_cnt[300][6];
 
 /**
  *  Support a few lightweight barriers
@@ -55,8 +56,10 @@ void* th_run(void * args)
 
 	int tm_cnt[6];
 	for (int i = 0; i < 6; i++)
+	{
 		tm_cnt[i] = 0;
-
+		path_cnt[id][i] = 0;
+	}
 	uint64_t localCounter = 0;
 	int fail_fast_log = -1;
 
@@ -91,6 +94,7 @@ void* th_run(void * args)
 again:
 			INVYSWELL_TX_BEGIN
 			cnt[id]++;
+			path_cnt[id][tx[tx_id].type]++;
 			if (status == _XBEGIN_STARTED || status == _STM_STARTED)
 			{
 				invyswell_tx_write(&accounts[acc1[j]], (invyswell_tx_read(&accounts[acc1[j]]) + 50));
@@ -117,8 +121,10 @@ again:
 			}
 		}
 	}
+// 	printf("Thread %d local counter = %lu, LightHW = %d, BFHW = %d, SpecSW = %d, IrrevocSW = %d, SglSW = %d, racy_shared: %ld, fail-fast happens on %d\n", \
+//			id, localCounter, tm_cnt[0], tm_cnt[1], tm_cnt[2], tm_cnt[3], tm_cnt[5], tx[tx_id].racy_shared, fail_fast_log); 
  	printf("Thread %d local counter = %lu, LightHW = %d, BFHW = %d, SpecSW = %d, IrrevocSW = %d, SglSW = %d, racy_shared: %ld, fail-fast happens on %d\n", \
-			id, localCounter, tm_cnt[0], tm_cnt[1], tm_cnt[2], tm_cnt[3], tm_cnt[5], tx[tx_id].racy_shared, fail_fast_log); 
+			id, localCounter, path_cnt[id][0], path_cnt[id][1], path_cnt[id][2], path_cnt[id][3], path_cnt[id][5], tx[tx_id].racy_shared, fail_fast_log); 
 
 	return 0;
 }
@@ -176,11 +182,24 @@ int main(int argc, char* argv[])
 	}
 
 	int total_cnt = 0;
+	int total_path_cnt[5];
+	total_path_cnt[0] = 0; 
+	total_path_cnt[1] = 0; 
+	total_path_cnt[2] = 0; 
+	total_path_cnt[3] = 0;
+	total_path_cnt[5] = 0; 
+
 	printf("sum = %ld, matched = %d changed %d\n", sum, sum == initSum, c);
 	for (int i=0; i < total_threads; i++)
+	{
 		total_cnt += cnt[i];
-
-	printf("total_cnt: %d\n", total_cnt);
+		total_path_cnt[0] += path_cnt[i][0]; 
+		total_path_cnt[1] += path_cnt[i][1]; 
+		total_path_cnt[2] += path_cnt[i][2]; 
+		total_path_cnt[3] += path_cnt[i][3];
+		total_path_cnt[5] += path_cnt[i][5]; 
+	}
+	printf("total_cnt: %d, LightHW: %d, BFHW: %d, SpecSW: %d, IrrevocSW: %d, SglSW: %d\n", total_cnt, total_path_cnt[0], total_path_cnt[1], total_path_cnt[2], total_path_cnt[3], total_path_cnt[5]);
 
 	return 0;
 }
