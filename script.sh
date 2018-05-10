@@ -1,5 +1,5 @@
 #!/bin/bash
-itarations=100
+itarations=5
 rm -rf output.txt
 
 for (( i=1; i<=$itarations; i++ ))
@@ -25,4 +25,4 @@ do
 done < "$filename"
 
         time=$(($time / $no_of_lines))
-echo 'Average Time = ' $time
+echo $time
