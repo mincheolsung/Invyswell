@@ -26,7 +26,7 @@
 
 #define FORCE_INLINE __attribute__((always_inline)) inline
 
-#define RACY_THRESHOLD 100
+#define RACY_THRESHOLD 200
 #define ACCESS_SIZE 102400
 #define FILTER_SIZE 4096
 #define WC  3

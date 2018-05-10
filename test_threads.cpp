@@ -18,6 +18,8 @@
 uint64_t* accountsAll;
 #define ACCOUT_NUM 1048576
 
+int cnt[300];
+
 /**
  *  Support a few lightweight barriers
  */
@@ -65,6 +67,7 @@ void* th_run(void * args)
 	{
 		int acc1[1000];
 		int acc2[1000];
+
 		for (int j=0; j< 10; j++)
 		{
 				acc1[j] = rand_r_32(&seed) % ACCOUT_NUM;
@@ -87,6 +90,7 @@ void* th_run(void * args)
 		{
 again:
 			INVYSWELL_TX_BEGIN
+			cnt[id]++;
 			if (status == _XBEGIN_STARTED || status == _STM_STARTED)
 			{
 				invyswell_tx_write(&accounts[acc1[j]], (invyswell_tx_read(&accounts[acc1[j]]) + 50));
@@ -115,7 +119,7 @@ again:
 	}
  	printf("Thread %d local counter = %lu, LightHW = %d, BFHW = %d, SpecSW = %d, IrrevocSW = %d, SglSW = %d, racy_shared: %ld, fail-fast happens on %d\n", \
 			id, localCounter, tm_cnt[0], tm_cnt[1], tm_cnt[2], tm_cnt[3], tm_cnt[5], tx[tx_id].racy_shared, fail_fast_log); 
-	
+
 	return 0;
 }
 
@@ -171,7 +175,12 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	int total_cnt = 0;
 	printf("sum = %ld, matched = %d changed %d\n", sum, sum == initSum, c);
+	for (int i=0; i < total_threads; i++)
+		total_cnt += cnt[i];
+
+	printf("total_cnt: %d\n", total_cnt);
 
 	return 0;
 }
